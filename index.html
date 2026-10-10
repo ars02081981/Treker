@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Трекер задач</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #1b2434;
+      --muted: #6d7890;
+      --line: #e6ebf3;
+      --accent: #3d6bff;
+      --accent-soft: #eef2ff;
+      --danger: #e25b4a;
+      --danger-soft: #fff1ef;
+      --done: #8b95a8;
+      --shadow: 0 18px 50px rgba(27, 36, 52, 0.08);
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 420px at 10% -10%, #dce6ff 0%, transparent 60%),
+        radial-gradient(700px 380px at 100% 0%, #e7f6f2 0%, transparent 55%),
+        var(--bg);
+    }
+
+    .page {
+      width: min(720px, calc(100% - 32px));
+      margin: 48px auto 64px;
+    }
+
+    header {
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      overflow: hidden;
+    }
+
+    .composer {
+      display: flex;
+      gap: 10px;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      height: 48px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fafc;
+      font: inherit;
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus {
+      background: #fff;
+      border-color: #c5d2ff;
+      box-shadow: 0 0 0 4px rgba(61, 107, 255, 0.12);
+    }
+
+    input[type="date"] {
+      width: 158px;
+      height: 48px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fafc;
+      font: inherit;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+      border: 0;
+    }
+
+    .add-btn {
+      height: 48px;
+      padding: 0 18px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 8px 18px rgba(61, 107, 255, 0.28);
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    .add-btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .add-btn:active {
+      transform: translateY(1px);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px 18px 0;
+    }
+
+    .stats {
+      display: flex;
+      gap: 8px;
+      margin-right: auto;
+    }
+
+    .stat {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f4f7fb;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .stat strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .filters {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 14px;
+      background: #f4f7fb;
+    }
+
+    .filter {
+      height: 34px;
+      padding: 0 12px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .filter:hover {
+      color: var(--text);
+    }
+
+    .filter.is-active {
+      background: #fff;
+      color: var(--accent);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(27, 36, 52, 0.08);
+    }
+
+    .list {
+      list-style: none;
+      margin: 0;
+      padding: 10px 10px 14px;
+    }
+
+    .task {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 8px;
+      padding: 12px 12px 12px 14px;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid transparent;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .task:hover {
+      background: #f8fafc;
+      border-color: var(--line);
+    }
+
+    .task.done .text {
+      color: var(--done);
+      text-decoration: line-through;
+      text-decoration-thickness: 1.5px;
+    }
+
+    .check {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      flex: 0 0 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .check:focus-visible {
+      outline: 3px solid rgba(61, 107, 255, 0.28);
+      outline-offset: 2px;
+    }
+
+    .text {
+      flex: 1;
+      min-width: 0;
+      font-size: 15px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .due {
+      flex: 0 0 auto;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #f4f7fb;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .due.overdue {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .delete-btn {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--danger);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .delete-btn:hover {
+      background: var(--danger-soft);
+    }
+
+    .empty {
+      margin: 8px 18px 22px;
+      padding: 28px 16px;
+      border-radius: 16px;
+      background: var(--accent-soft);
+      color: #44506a;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        margin-top: 24px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .composer {
+        flex-direction: column;
+      }
+
+      .add-btn,
+      input[type="date"] {
+        width: 100%;
+      }
+
+      .filters {
+        width: 100%;
+      }
+
+      .filter {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <p class="eyebrow">Личный список</p>
+      <h1>Трекер задач</h1>
+      <p class="subtitle">Добавляйте дела, отмечайте готовые и убирайте лишнее.</p>
+    </header>
+
+    <section class="card" aria-labelledby="board-title">
+      <h2 id="board-title" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Список задач</h2>
+      <form class="composer" id="form">
+        <input
+          id="task-input"
+          type="text"
+          placeholder="Новая задача"
+          maxlength="160"
+          autocomplete="off"
+          aria-label="Новая задача"
+        >
+        <input id="due-input" type="date" aria-label="Дедлайн">
+        <button class="add-btn" type="submit">Добавить</button>
+      </form>
+
+      <div class="toolbar">
+        <div class="stats" id="stats" hidden>
+          <span class="stat">Всего <strong id="total-count">0</strong></span>
+          <span class="stat">Осталось <strong id="open-count">0</strong></span>
+        </div>
+        <div class="filters" role="group" aria-label="Фильтр задач">
+          <button type="button" class="filter is-active" data-filter="all" aria-pressed="true">Все</button>
+          <button type="button" class="filter" data-filter="active" aria-pressed="false">Активные</button>
+          <button type="button" class="filter" data-filter="done" aria-pressed="false">Завершенные</button>
+        </div>
+      </div>
+
+      <p class="empty" id="empty">Список пуст. Добавьте первую задачу.</p>
+      <ul class="list" id="list"></ul>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "treker-todo-tasks";
+    const form = document.getElementById("form");
+    const input = document.getElementById("task-input");
+    const dueInput = document.getElementById("due-input");
+    const list = document.getElementById("list");
+    const empty = document.getElementById("empty");
+    const stats = document.getElementById("stats");
+    const totalCount = document.getElementById("total-count");
+    const openCount = document.getElementById("open-count");
+    const filterButtons = document.querySelectorAll(".filter");
+
+    const emptyMessages = {
+      all: "Список пуст. Добавьте первую задачу.",
+      active: "Нет активных задач.",
+      done: "Нет завершенных задач."
+    };
+
+    const shortMonths = ["янв.", "февр.", "мар.", "апр.", "мая", "июн.", "июл.", "авг.", "сент.", "окт.", "нояб.", "дек."];
+    const longMonths = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+
+    let tasks = loadTasks();
+    let filter = "all";
+
+    function loadTasks() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+          .filter((task) => task && typeof task.text === "string" && task.id)
+          .map((task) => ({
+            id: task.id,
+            text: task.text,
+            done: Boolean(task.done),
+            dueDate: /^\d{4}-\d{2}-\d{2}$/.test(task.dueDate) ? task.dueDate : ""
+          }));
+      } catch {
+        return [];
+      }
+    }
+
+    function saveTasks() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    function todayISO() {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      return `${now.getFullYear()}-${month}-${day}`;
+    }
+
+    function isOverdue(task) {
+      return Boolean(task.dueDate) && !task.done && task.dueDate < todayISO();
+    }
+
+    function formatDueDate(iso) {
+      const [, month, day] = iso.split("-");
+      return `${Number(day)} ${shortMonths[Number(month) - 1]}`;
+    }
+
+    function dueLabel(task) {
+      const [, month, day] = task.dueDate.split("-");
+      const spoken = `${Number(day)} ${longMonths[Number(month) - 1]}`;
+      return isOverdue(task) ? `Дедлайн просрочен, ${spoken}` : `Дедлайн ${spoken}`;
+    }
+
+    function compareByDueDate(a, b) {
+      if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+      if (a.dueDate) return -1;
+      if (b.dueDate) return 1;
+      return 0;
+    }
+
+    function visibleTasks() {
+      const filtered = filter === "active"
+        ? tasks.filter((task) => !task.done)
+        : filter === "done"
+          ? tasks.filter((task) => task.done)
+          : tasks;
+      return filtered.slice().sort(compareByDueDate);
+    }
+
+    function render() {
+      list.replaceChildren();
+      const open = tasks.filter((task) => !task.done).length;
+      const visible = visibleTasks();
+
+      empty.hidden = visible.length > 0;
+      empty.textContent = emptyMessages[filter];
+      stats.hidden = tasks.length === 0;
+      totalCount.textContent = String(tasks.length);
+      openCount.textContent = String(open);
+
+      filterButtons.forEach((button) => {
+        const active = button.dataset.filter === filter;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+
+      visible.forEach((task) => {
+        const item = document.createElement("li");
+        item.className = "task" + (task.done ? " done" : "");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "check";
+        checkbox.checked = task.done;
+        checkbox.setAttribute("aria-label", task.done ? "Снять отметку" : "Отметить выполненной");
+        checkbox.addEventListener("change", () => {
+          task.done = checkbox.checked;
+          saveTasks();
+          render();
+        });
+
+        const text = document.createElement("span");
+        text.className = "text";
+        text.textContent = task.text;
+
+        const parts = [checkbox, text];
+
+        if (task.dueDate) {
+          const due = document.createElement("span");
+          due.className = "due" + (isOverdue(task) ? " overdue" : "");
+          due.textContent = formatDueDate(task.dueDate);
+          due.setAttribute("aria-label", dueLabel(task));
+          parts.push(due);
+        }
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "delete-btn";
+        remove.textContent = "Удалить";
+        remove.addEventListener("click", () => {
+          tasks = tasks.filter((entry) => entry.id !== task.id);
+          saveTasks();
+          render();
+        });
+
+        parts.push(remove);
+        item.append(...parts);
+        list.append(item);
+      });
+    }
+
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        filter = button.dataset.filter;
+        render();
+      });
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text) {
+        input.focus();
+        return;
+      }
+
+      tasks.unshift({
+        id: crypto.randomUUID(),
+        text,
+        done: false,
+        dueDate: dueInput.value
+      });
+      input.value = "";
+      dueInput.value = "";
+      saveTasks();
+      render();
+      input.focus();
+    });
+
+    render();
+  </script>
+</body>
+</html>
